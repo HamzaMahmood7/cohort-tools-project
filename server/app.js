@@ -5,6 +5,13 @@ const PORT = 5005;
 
 const mongoose = require("mongoose");
 
+// Import the custom error handling middleware:
+const {
+  errorHandler,
+  notFoundHandler,
+} = require("./middleware/error-handling");
+
+// DB CONNECTION
 mongoose
   .connect("mongodb://localhost:27017/cohort-tools-api")
   .then((x) => console.log(`Connected to Database: "${x.connections[0].name}"`))
@@ -12,7 +19,7 @@ mongoose
 
 // importing the models
 const CohortModel = require("./models/cohort.model");
-const StudentModel = require('./models/student.model')
+const StudentModel = require("./models/student.model");
 
 // STATIC DATA
 // Devs Team - Import the provided files with JSON data of students and cohorts here:
@@ -138,7 +145,8 @@ app.post("/api/students", (req, res) => {
 
 // Get /students - Retrieve all the students from the database
 app.get("/api/students", (req, res) => {
-  StudentModel.find().populate("cohort")
+  StudentModel.find()
+    .populate("cohort")
     .then((students) => {
       console.log("retrieved cohorts: ", cohorts);
       res.json(students);
@@ -149,7 +157,6 @@ app.get("/api/students", (req, res) => {
       res.status(500).json({ error: "failed to retrieve students" });
     });
 });
-
 
 app.get("/api/students/:studentId", async (req, res) => {
   try {
@@ -187,7 +194,6 @@ app.put("/api/students/:studentId", async (req, res) => {
   }
 });
 
-
 app.delete("/api/students/:studentId", async (req, res) => {
   try {
     await StudentModel.findByIdAndDelete(req.params.studentId);
@@ -197,6 +203,9 @@ app.delete("/api/students/:studentId", async (req, res) => {
   }
 });
 
+// Set up custom error handling middleware:
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 // START SERVER
 app.listen(PORT, () => {
